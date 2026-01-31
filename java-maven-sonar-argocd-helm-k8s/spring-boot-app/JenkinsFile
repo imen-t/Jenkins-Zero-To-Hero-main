@@ -1,9 +1,9 @@
 pipeline {
     agent {
         docker {
-            // Using a Java 17 image to fix the 'class file version 61.0' error
             image 'maven:3.8.6-eclipse-temurin-17'
-            args '--user root -v /var/run/docker.sock:/var/run/docker.sock'
+            // Added -u 0:0 to ensure the container runs as root to access the socket
+            args '-u 0:0 -v /var/run/docker.sock:/var/run/docker.sock'
         }
     }
 
@@ -86,7 +86,14 @@ pipeline {
 
     post {
         always {
-            sh 'docker logout'
+            // Wrapped in a script block to prevent the 'Required context' error if node fails
+            script {
+                try {
+                    sh 'docker logout'
+                } catch (e) {
+                    echo "Docker already logged out or agent unavailable."
+                }
+            }
         }
     }
 }
