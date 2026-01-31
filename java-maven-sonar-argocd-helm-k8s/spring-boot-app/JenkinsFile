@@ -39,6 +39,7 @@ pipeline {
 
         stage('Dépôt sur Nexus') {
             steps {
+                // Using 'nexus-credentials' as seen in your screenshot
                 withCredentials([usernamePassword(credentialsId: 'nexus-credentials', passwordVariable: 'NEXUS_PASSWORD', usernameVariable: 'NEXUS_USERNAME')]) {
                     sh '''
                         cd java-maven-sonar-argocd-helm-k8s/spring-boot-app && \
@@ -57,6 +58,7 @@ pipeline {
             steps {
                 script {
                     sh 'cd java-maven-sonar-argocd-helm-k8s/spring-boot-app && docker build -t ${DOCKER_IMAGE} .'
+                    // Using 'docker-cred' as seen in your screenshot
                     docker.withRegistry('https://index.docker.io/v1/', "docker-cred") {
                         docker.image("${DOCKER_IMAGE}").push()
                     }
@@ -66,7 +68,8 @@ pipeline {
 
         stage('Mise à jour GitOps') {
             environment {
-                GIT_REPO = "Jenkins-Zero-To-Hero-main"
+                // Ensure this matches your actual GitHub Repo name!
+                GIT_REPO = "Jenkins-Zero-To-Hero-main" 
                 GIT_USER = "imen-t"
             }
             steps {
@@ -86,12 +89,12 @@ pipeline {
 
     post {
         always {
-            // Wrapped in a script block to prevent the 'Required context' error if node fails
             script {
                 try {
+                    // This will fail inside the Maven container but we catch it so the build stays green
                     sh 'docker logout'
                 } catch (e) {
-                    echo "Docker already logged out or agent unavailable."
+                    echo "Docker logout skipped: CLI not available in Maven container."
                 }
             }
         }
