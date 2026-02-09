@@ -75,19 +75,19 @@ pipeline {
         }
 
         stage('Mise à jour GitOps') {
-            steps {
-                withCredentials([string(credentialsId: 'github', variable: 'GITHUB_TOKEN')]) {
-                    sh '''
-                        git config user.email "torjmenimen01@gmail.com"
-                        git config user.name "imen-t" 
-                        sed -i "s/replaceImageTag/${BUILD_NUMBER}/g" java-maven-sonar-argocd-helm-k8s/spring-boot-app-manifests/deployment.yml
-                        git add java-maven-sonar-argocd-helm-k8s/spring-boot-app-manifests/deployment.yml
-                        git commit -m "Update image to version ${BUILD_NUMBER} [skip ci]"
-                        git push https://${GITHUB_TOKEN}@github.com/imen-t/Jenkins-Zero-To-Hero-main.git HEAD:main
-                    '''
-                }
-            }
+    steps {
+        withCredentials([string(credentialsId: 'github', variable: 'GITHUB_TOKEN')]) {
+            sh '''
+              git checkout main || true
+              sed -i "s/replaceImageTag/${BUILD_NUMBER}/g" \
+                java-maven-sonar-argocd-helm-k8s/spring-boot-app-manifests/deployment.yml || true
+              git add java-maven-sonar-argocd-helm-k8s/spring-boot-app-manifests/deployment.yml || true
+              git commit -m "Update image ${BUILD_NUMBER}" || true
+              git push https://${GITHUB_TOKEN}@github.com/imen-t/Jenkins-Zero-To-Hero-main.git main || true
+            '''
         }
+    }
+}
     }
 
     post {
